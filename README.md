@@ -12,16 +12,20 @@ https://github.com/NeoGames4/ChaosGame-Simulation/assets/48923122/94dc1c3c-4735-
 2. Scroll down to the constructor: `public Frame() {…}`, “GAME CREATION”.
 3. Replace `ChaosGameSetups.getEqualateralTriangle(400)` either with a custom `Node[]`-array or one of the other templates of the `ChaosGameSetups.java` class.
 
-Please check `ChaosGameSetups.java` or the javadocs for more informaiton.
+Please check `ChaosGameSetups.java` or the [javadocs](https://neogames4.github.io/docs/ChaosGame/java/index.html) for more information.
+Use `ChaosGameSetups.getCircle(…)` to generate any [regular polygon](https://en.wikipedia.org/wiki/Regular_polygon).
+Take a look [here](https://neogames4.github.io/docs/ChaosGame/java/game/ChaosGameSetups.html) to see all provided starting arrangements.
 
 ## Controls
-* W, A, S or D		– Move around
-* X or Y			– Zoom in or out
-* Shift		– Hold to accelerate navigation
-* R			– Reset position and zoom
-* Space		– Pause or continue
-* E			– Continue one step
-* Arrow Up		– Increase steps per frame
-* Arrow Down	– Decrease steps per frame
-* I or O			– Decrease or increase dot size
-* H			– Hold to show help menu
+* W, A, S or D – Move around
+* X or Y – Zoom in or out
+* Shift – Hold to accelerate navigation
+* R – Reset position and zoom
+* Space – Pause or continue
+* E	– Continue one step
+* Arrow Up – Increase steps per frame
+* Arrow Down – Decrease steps per frame
+* I or O – Decrease or increase dot size
+* F1 – Toggle the UI
+* F2 – Toggle connecting lines
+* H – Hold to show help menu
