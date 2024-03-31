@@ -27,6 +27,7 @@ public class ChaosGame {
 	public static final Color DOT_COLOR = Color.WHITE,
 			START_DOT_COLOR = Color.YELLOW,
 			LATEST_DOT_COLOR = Color.MAGENTA,
+			CONNECTING_LINE_COLOR = Color.GRAY,
 			BACKGROUND_COLOR = Color.BLACK;
 	
 	/**
@@ -112,12 +113,17 @@ public class ChaosGame {
 	 * @see #mayRepeat
 	 */
 	public void play() {
+		// SELECT TARGET NODE
 		int targetIndex = ThreadLocalRandom.current().nextInt(0, nodes.length);
 		while(!mayRepeat && nodes[targetIndex].equals(latestNode)) targetIndex = ThreadLocalRandom.current().nextInt(0, nodes.length);
+		
 		latestNode = nodes[targetIndex];
 		occurrences.put(latestNode.name, occurrences.get(latestNode.name)+1);
+		
+		// SELECT THE DOT MOST RECENTLY ADDED
 		Dot latestDot = dots.get(dots.size()-1);
 		
+		// ADDS THE NEW DOT
 		float newX = latestDot.x+(latestNode.x-latestDot.x)/divisor;
 		float newY = latestDot.y+(latestNode.y-latestDot.y)/divisor;
 		dots.add(new Dot(newX, newY));

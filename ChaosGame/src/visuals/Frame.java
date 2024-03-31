@@ -1,5 +1,6 @@
 package visuals;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import controls.Controls;
 import game.ChaosGame;
 import game.ChaosGameSetups;
 import game.Dot;
@@ -29,19 +31,19 @@ public class Frame extends JFrame {
 	
 	/**
 	 * The frames per second.
-	 * @see #sps sps – Game steps per frame.
+	 * @see #spf spf – Game steps per frame.
 	 */
 	public static final int FPS = 30;
 	/**
-	 * The game steps per frame. To get the number of game steps per second, multiply FPS and SPS.
+	 * The game steps per frame. To get the number of game steps per second, multiply FPS and SPF.
 	 * @see #FPS FPS – Frames per second.
 	 */
-	public 				int sps = 6;
+	public 				int spf = 6;
 	
 	/**
 	 * Whether the auto mode of the game is currently paused. In auto mode, the game steps are performed FPS times SPS per second.
 	 * @see #FPS
-	 * @see #sps
+	 * @see #spf
 	 */
 	private boolean paused = true;			// Whether the game is paused
 	
@@ -84,7 +86,7 @@ public class Frame extends JFrame {
 		// RUN
 		Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
 			if(this.isVisible()) {
-				if(!paused) for(int i = 0; i<sps; i++) game.play();
+				if(!paused) for(int i = 0; i<spf; i++) game.play();
 				repaint();
 			}
 		}, 0, 1000/FPS, TimeUnit.MILLISECONDS);
@@ -163,21 +165,35 @@ public class Frame extends JFrame {
 		private final float zoomVelocity = 0.07f;				// Per second
 		
 		/**
+		 * Whether to show UI components.
+		 * @see #showConnectingLine
+		 */
+		private boolean showUI = true;
+		/**
+		 * Whether to show the line connecting the pre-latest dot with the latest node.
+		 * (Revealing the distance which is divided to calculate the next dot position.)
+		 * @see #showConnectingLine
+		 */
+		private boolean showConnectingLine = true;
+		
+		/**
 		 * The help menu.
 		 * @see CenteredTextBox
 		 */
 		private final CenteredTextBox helpMenu = new CenteredTextBox(
 				"Chaos Game Java Simulation – © 2024 Mika Thein.\n"
 				+ "Controls.\n"
-				+ "W/A/S/D		– Move\n"
-				+ "X/Y			– Zoom in/out\n"
-				+ "Shift		– Hold to accelerate navigation"
+				+ "W, A, S or D	– Move\n"
+				+ "X or Y		– Zoom in or out\n"
+				+ "Shift		– Hold to accelerate navigation\n"
 				+ "R			– Reset position and zoom\n"
 				+ "Space		– Pause or continue\n"
 				+ "E			– Continue one step\n"
 				+ "Arrow Up		– Increase steps per frame\n"
 				+ "Arrow Down	– Decrease steps per frame\n"
-				+ "I/O			– Decrease/increase dot size\n"
+				+ "I or O		– Decrease or increase dot size\n"
+				+ "F1			– Toggle UI\n"
+				+ "F2			– Toggle connecting line\n"
 				+ "H			– Hold to show help menu",
 				getWidth()/2, getHeight()/2);
 		
@@ -207,14 +223,14 @@ public class Frame extends JFrame {
 			
 			// GAME SPEED
 			if(Controls.ARROW_UP_DOWN) {
-				sps++;
+				spf++;
 				Controls.ARROW_UP_DOWN = false;
 			}
 			if(Controls.ARROW_DOWN_DOWN) {
-				sps--;
+				spf--;
 				Controls.ARROW_DOWN_DOWN = false;
 			}
-			if(sps < 0) sps = 0;
+			if(spf < 0) spf = 0;
 			
 			// PAUSE
 			if(Controls.SPACE_DOWN) {
@@ -239,9 +255,29 @@ public class Frame extends JFrame {
 			}
 			if(dotSize < 1) dotSize = 1;
 			
+			// TOGGLE UI
+			if(Controls.F1_DOWN) {
+				showUI = !showUI;
+				Controls.F1_DOWN = false;
+			}
+			if(Controls.F2_DOWN) {
+				showConnectingLine = !showConnectingLine;
+				Controls.F2_DOWN = false;
+			}
+			
 			// BACKGROUND
 			g2.setColor(ChaosGame.BACKGROUND_COLOR);
 			g2.fillRect(0, 0, getWidth(), getHeight());
+			
+			// LINE CONNECTING LATEST DOT AND LATEST TARGET NODE
+			ArrayList<Dot> dots = new ArrayList<>();
+			dots.addAll(game.dots);
+			g2.setColor(ChaosGame.CONNECTING_LINE_COLOR);
+			g2.setStroke(new BasicStroke(1));
+			if(showConnectingLine && game.latestNode != null && dots.size() > 1) {
+				Dot dot = dots.get(dots.size()-2);
+				g2.drawLine((int) (dot.x*zoomFactor) + offsetX, (int) (dot.y*zoomFactor) + offsetY, (int) (game.latestNode.x*zoomFactor) + offsetX, (int) (game.latestNode.y*zoomFactor) + offsetY);
+			}
 			
 			// NODES
 			for(Node n : game.nodes) {
@@ -251,8 +287,6 @@ public class Frame extends JFrame {
 			}
 			
 			// DOTS
-			ArrayList<Dot> dots = new ArrayList<>();
-			dots.addAll(game.dots);
 			for(Dot d : dots) {
 				if(d.color != null) g2.setColor(d.color);
 				else if(game.dots.get(game.dots.size()-1).equals(d)) g2.setColor(ChaosGame.LATEST_DOT_COLOR);
@@ -270,44 +304,47 @@ public class Frame extends JFrame {
 			}
 			
 			// OVERLAY
-			g2.setColor(Color.WHITE);
-			// TOP LEFT GENERAL INFO PANEL
-			int textYOffset = 0, textHeight = g2.getFontMetrics().getHeight()+5;
-			g2.drawString("Nodes: " + game.nodes.length, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
-			g2.drawString("Dots: " + game.dots.size(), MARGIN, MARGIN+5+((textYOffset++)*textHeight));
-			g2.drawString("FPS: " + currentFps + " of " + FPS, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
-			g2.drawString("SPS: " + sps + ", Dots Per Second: " + (paused ? "0" : (currentFps*sps)), MARGIN, MARGIN+5+((textYOffset++)*textHeight));
-			g2.drawString("Dot size: " + dotSize, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
-			
-			// TOP CENTER LAST NODE AND PAUSED INFO PANEL
-			String latestNodeText = "Latest node: " + (game.latestNode != null ? game.latestNode.name : "/");
-			g2.drawString(latestNodeText, getWidth()/2 - g2.getFontMetrics().stringWidth(latestNodeText)/2, MARGIN+textHeight);
-			if(paused) {
-				g2.setColor(new Color(255, 100, 100));
-				g2.drawString("Paused", getWidth()/2-g2.getFontMetrics().stringWidth("Paused")/2, MARGIN+textHeight*3);
-			}
-			
-			// TOP RIGHT NODE OCCURRENCE CHART
-			if(game.dots.size() > 1) {
-				NameFloatPair[] nodeData = new NameFloatPair[game.nodes.length];
-				for(int i = 0; i<nodeData.length; i++) {
-					String name = game.nodes[i].name;
-					nodeData[i] = new NameFloatPair(name, game.getNodeOccurrence(name), game.nodes[i].color);
+			if(showUI) {
+				g2.setColor(Color.WHITE);
+				// TOP LEFT GENERAL INFO PANEL
+				int textYOffset = 0, textHeight = g2.getFontMetrics().getHeight()+5;
+				g2.drawString("Nodes: " + game.nodes.length, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				g2.drawString("Dots: " + game.dots.size(), MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				g2.drawString("Nodes may repeat: " + (game.mayRepeat ? "Yes" : "No"), MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				g2.drawString("FPS: " + currentFps + " of " + FPS, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				g2.drawString("SPF: " + spf + ", Dots Per Second: " + (paused ? "0" : (currentFps*spf)), MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				g2.drawString("Dot size: " + dotSize, MARGIN, MARGIN+5+((textYOffset++)*textHeight));
+				
+				// TOP CENTER LAST NODE AND PAUSED INFO PANEL
+				String latestNodeText = "Latest node: " + (game.latestNode != null ? game.latestNode.name : "/");
+				g2.drawString(latestNodeText, getWidth()/2 - g2.getFontMetrics().stringWidth(latestNodeText)/2, MARGIN+textHeight);
+				if(paused) {
+					g2.setColor(new Color(255, 100, 100));
+					g2.drawString("Paused", getWidth()/2-g2.getFontMetrics().stringWidth("Paused")/2, MARGIN+textHeight*3);
 				}
-				BarChart chart = new BarChart(getWidth()-CHART_WIDTH-MARGIN, MARGIN, CHART_WIDTH, CHART_HEIGHT, nodeData, game.dots.size()-1);
-				chart.paint(g2);
+				
+				// TOP RIGHT NODE OCCURRENCE CHART
+				if(game.dots.size() > 1) {
+					NameFloatPair[] nodeData = new NameFloatPair[game.nodes.length];
+					for(int i = 0; i<nodeData.length; i++) {
+						String name = game.nodes[i].name;
+						nodeData[i] = new NameFloatPair(name, game.getNodeOccurrence(name), game.nodes[i].color);
+					}
+					BarChart chart = new BarChart(getWidth()-CHART_WIDTH-MARGIN, MARGIN, CHART_WIDTH, CHART_HEIGHT, nodeData, game.dots.size()-1);
+					chart.paint(g2);
+				}
+				
+				// BOTTOM CENTER MOVEMENT INFO PANEL
+				g2.setFont(new Font("Monospaced", Font.BOLD, 13));
+				g2.setColor(Color.GRAY);
+				String positionText = "x: " + viewOffsetX + ", y: " + viewOffsetY;
+				String zoomText = "Zoom: " + zoomFactor;
+				String helpText = "(Press and hold 'H' to show the help menu.)";
+				textYOffset = 1; textHeight = g2.getFontMetrics().getHeight();
+				g2.drawString(helpText, getWidth()/2-g2.getFontMetrics().stringWidth(helpText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
+				g2.drawString(zoomText, getWidth()/2-g2.getFontMetrics().stringWidth(zoomText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
+				g2.drawString(positionText, getWidth()/2-g2.getFontMetrics().stringWidth(positionText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
 			}
-			
-			// BOTTOM CENTER MOVEMENT INFO PANEL
-			g2.setFont(new Font("Monospaced", Font.BOLD, 13));
-			g2.setColor(Color.GRAY);
-			String positionText = "x: " + viewOffsetX + ", y: " + viewOffsetY;
-			String zoomText = "Zoom: " + zoomFactor;
-			String helpText = "(Press and hold 'H' to show the help menu.)";
-			textYOffset = 1; textHeight = g2.getFontMetrics().getHeight();
-			g2.drawString(helpText, getWidth()/2-g2.getFontMetrics().stringWidth(helpText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
-			g2.drawString(zoomText, getWidth()/2-g2.getFontMetrics().stringWidth(zoomText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
-			g2.drawString(positionText, getWidth()/2-g2.getFontMetrics().stringWidth(positionText)/2, getHeight()-MARGIN*2-((textYOffset++)*textHeight));
 			
 			// HELP INFO PANEL
 			if(Controls.H_DOWN) {

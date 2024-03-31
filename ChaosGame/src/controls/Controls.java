@@ -1,4 +1,4 @@
-package visuals;
+package controls;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -26,6 +26,8 @@ public class Controls implements KeyListener {
 			SPACE_DOWN = false,					// Pause							// ALSO MODIFIED FROM Frame.java
 			I_DOWN = false,						// Dot size							// ALSO MODIFIED FROM Frame.java
 			O_DOWN = false,															// ALSO MODIFIED FROM Frame.java
+			F1_DOWN = false,					// Toggle UI						// ALSO MODIFIED FROM Frame.java
+			F2_DOWN = false,					// Toggle connecting line			// ALSO MODIFIED FROM Frame.java
 			H_DOWN = false;						// Help menu
 	
 	@Override
@@ -72,6 +74,12 @@ public class Controls implements KeyListener {
 				break;
 			case KeyEvent.VK_O:
 				O_DOWN = true;
+				break;
+			case KeyEvent.VK_F1:
+				F1_DOWN = true;
+				break;
+			case KeyEvent.VK_F2:
+				F2_DOWN = true;
 				break;
 			case KeyEvent.VK_H:
 				H_DOWN = true;
@@ -123,6 +131,12 @@ public class Controls implements KeyListener {
 				break;
 			case KeyEvent.VK_O:
 				O_DOWN = false;
+				break;
+			case KeyEvent.VK_F1:
+				F1_DOWN = false;
+				break;
+			case KeyEvent.VK_F2:
+				F2_DOWN = false;
 				break;
 			case KeyEvent.VK_H:
 				H_DOWN = false;
